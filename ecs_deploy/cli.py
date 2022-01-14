@@ -151,7 +151,10 @@ def deploy(cluster, service, tag, image, command, health_check, cpu, memory, mem
             slack.notify_failure(cluster, str(e), service=service)
             if rollback:
                 click.secho('%s\n' % str(e), fg='red', err=True)
-                rollback_task_definition(deployment, td, new_td, sleep_time=sleep_time)
+                try:
+                    rollback_task_definition(deployment, td, new_td, sleep_time=sleep_time)
+                except TaskPlacementError as e:
+                    slack.notify_rollback_failure(cluster, str(e), service=service)
                 exit(1)
             else:
                 raise

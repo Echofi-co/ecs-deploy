@@ -128,3 +128,30 @@ class SlackNotification(object):
             raise SlackException('Notifying deployment failed')
 
         return response
+
+    def notify_rollback_failure(self, cluster, error, service=None, rule=None):
+        if not self.__url or not self.__service_match_re.search(service or rule):
+            return
+
+        duration = datetime.utcnow() - self.__timestamp_start
+
+        messages = [
+            ('Cluster', cluster),
+        ]
+
+        if service:
+            messages.append(('Service', service))
+        if rule:
+            messages.append(('Scheduled Task', rule))
+
+        messages.append(('Duration', str(duration)))
+        messages.append(('Error', error))
+
+        payload = self.get_payload('Rollback failed', messages, 'danger')
+
+        response = requests.post(self.__url, json=payload)
+
+        if response.status_code != 200:
+            raise SlackException('Notifying ROLLBACK deployment failed')
+
+        return response
